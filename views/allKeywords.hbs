@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="description" content="Template Page" />
+    <meta charset="utf-8">
+    <title>{{pageTitle}}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="">
+    <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>All Unique keywords</h1>
+
+    </div>
+    <div>
+        <ul>
+            {{#each keywords}}
+            <li>
+                <a href="http://localhost:3000/keyworduser/{{this}}" target="_blank">{{ this }}</a>
+            </li>
+            {{/each}}
+        </ul>
+        <br>
+        <br>
+        <b>Unique Keywords Count:</b>{{keywordCount}}
+    </div>
+
+    <script>
+    </script>
+
+</body>
+
+</html>

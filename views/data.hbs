@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="description" content="Template Page" />
+    <meta charset="utf-8">
+    <title>{{pageTitle}}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="">
+    <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>All numbers with keywords</h1>
+
+    </div>
+    <div>List
+        <br> {{#list data}}
+        <b>
+            <a href="http://localhost:3000/smsData/{{phone}}" target="_blank">{{phone}}</a>
+        </b> :: {{keywords}} {{/list}}
+    </div>
+
+    <script>
+    </script>
+
+</body>
+
+</html>
