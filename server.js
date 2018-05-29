@@ -12,7 +12,13 @@ const hbs = require("hbs");
 
 const env = process.env.NODE_ENV || "development";
 
-var connection = mongoose.connect("mongodb://localhost:27017/motomojo");
+var connection = mongoose.connect("mongodb://127.0.0.1:27017/motomojo", err => {
+  if (err) {
+    console.log("Error: " + err);
+  } else {
+    console.log("connection success!!");
+  }
+});
 
 process.on("uncaughtException", function(error) {
   console.log(error.stack);
@@ -48,7 +54,7 @@ var port = process.env.PORT || 3000;
 var router = express.Router();
 
 //Routes
-router.route("/getkeywords").get(smsController.getKeywords); //Uploads excel file and extracts keywords for each sms
+router.route("/getkeywords").get(smsController.getKeywordsBig); //Uploads excel file and extracts keywords for each sms
 router.route("/allsmsData").get(smsController.getallsmsData); //All SMS data in raw format JSON
 router.route("/templateData").get(smsController.gettemplateData); //gets phone number data with keywords
 router.route("/smsData/:phoneNumber").get(smsController.getsmsData); //Template data of SMS as per given phone number
@@ -57,6 +63,7 @@ router.route("/keywordUser/:keyword").get(smsController.getKeywordUsers); //Phon
 router.route("/manyKeywordUser/").get(smsController.getManyKeywordUsers); //Phone numbers associated with array of keywords
 router.route("/aggrData").get(smsController.getAggrData); //gets unique keywords
 
+router.route("/deleteAllsms/").get(smsController.deleteSMS);
 router.route("/validmail/:mail").get(smsController.getValidMail);
 
 //Register routes with API

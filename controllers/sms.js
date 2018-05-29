@@ -2,11 +2,12 @@ const legit = require("legit"); //for checking email
 const MailConfirm = require("mail-confirm");
 const emailExistence = require("email-existence");
 var SMS = require("../models/SMS");
-
+var fs = require("fs");
 var _ = require("lodash");
 var lda = require("lda");
 var keyword_extractor = require("keyword-extractor");
 var mongoxlsx = require("mongo-xlsx");
+var ExcelReader = require("node-excel-stream").ExcelReader;
 
 // // Example document.
 // var text = 'Cats are small. Dogs are big. Cats like to chase mice. Dogs like to eat bones.';
@@ -26,6 +27,7 @@ exports.getKeywords = function(req, res) {
   mongoxlsx.xlsx2MongoData(xlsx, model, function(err, data) {
     //console.log(data);
     for (var i = 0; i < data.length; i++) {
+      console.log(i + "\n");
       var item = {};
       item["phone"] = data[i]["Mobile Number"];
       item["text"] = data[i]["Message Text"];
@@ -61,6 +63,69 @@ exports.getKeywords = function(req, res) {
     [{ Name: 'Eddie', Email: 'edward@mail' }, { Name: 'Nico', Email: 'nicolas@mail' }]  
     */
   });
+};
+
+exports.getKeywordsBig = function(req, res) {
+  let dataStream = fs.createReadStream("smsFile.xlsx");
+  let reader = new ExcelReader(dataStream, {
+    sheets: [
+      {
+        name: "Sheet1",
+        rows: {
+          headerRow: 1,
+          allowedHeaders: [
+            {
+              name: "Mobile Number",
+              key: "phone"
+            },
+            {
+              name: "Message Text",
+              key: "text"
+            },
+            { name: "Bearer", key: "bearer" },
+            { name: "Operator", key: "operator" },
+            { name: "Circle", key: "circle" }
+          ]
+        }
+      }
+    ]
+  });
+  console.log("Starting Parse");
+  reader
+    .eachRow((rowData, rowNum, sheetSchema) => {
+      console.log(`  >>${rowNum}/23366      ${rowData.phone}`);
+
+      var item = {};
+      item["phone"] = rowData.phone;
+      item["text"] = rowData.text;
+      var sentence = rowData.text.match(/[^\.!\?]+[\.!\?]+/g);
+      item["lda"] = lda(sentence, 1, 5);
+      item["bearer"] = rowData.bearer;
+      item["operator"] = rowData.operator;
+      item["circle"] = rowData.circle;
+      item["keywords"] = keyword_extractor.extract(rowData.text, {
+        language: "english",
+        remove_digits: true,
+        return_changed_case: true,
+        remove_duplicates: true
+      });
+      var regex = /xx[0-9]{4}/g; //Regular expression to remove credit card numbers
+      item["keywords"] = item["keywords"].filter(val => {
+        //console.log(item["phone"] + " " + rowData.phone);
+        return !val.match(regex);
+      });
+
+      var sms = new SMS(item);
+      console.log(sms);
+      sms.save(function(err) {
+        console.log("Trying to save");
+      });
+      console.log(JSON.stringify(item));
+    })
+    .then(() => {
+      console.log("Parsing Done");
+      res.json("Finished!!");
+    });
 };
 
 exports.gettemplateData = function(req, res) {
@@ -278,5 +343,11 @@ exports.getValidMail = function(req, res) {
     } else {
       res.json("res: " + response);
     }
+  });
+};
+
+exports.deleteSMS = function(req, res) {
+  SMS.find({}).remove(() => {
+    res.json("Deleted SMS data all");
   });
 };

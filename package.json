@@ -18,6 +18,7 @@
     "cors": "^2.8.4",
     "email-existence": "^0.1.6",
     "express": "^4.16.3",
+    "fs": "0.0.1-security",
     "hbs": "^4.0.1",
     "keyword-extractor": "0.0.15",
     "lda": "^0.2.0",
@@ -25,6 +26,7 @@
     "lodash": "^4.17.10",
     "mail-confirm": "^1.0.2",
     "mongo-xlsx": "^1.0.12",
-    "mongoose": "^5.1.2"
+    "mongoose": "^5.1.2",
+    "node-excel-stream": "^1.0.1"
   }
 }
