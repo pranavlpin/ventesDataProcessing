@@ -407,7 +407,7 @@ exports.getAggrData = function(req, res) {
 // };
 
 exports.getValidMailAll = function(req, res) {
-  let dataStream = fs.createReadStream("./data/emails/emails1.xlsx");
+  let dataStream = fs.createReadStream("./data/emails/emails.xlsx");
   let reader = new ExcelReader(dataStream, {
     sheets: [
       {
@@ -429,24 +429,62 @@ exports.getValidMailAll = function(req, res) {
   reader.eachRow((rowData, rowNum, sheetSchema) => {
     console.log("\n" + j++ + "/987815" + JSON.stringify(rowData) + "\n");
 
-    emailExistence.check(rowData.email, function(err, response) {
+    var email = new Email({
+      email: rowData.email
+    });
+    email.save(err => {
       if (err) {
-        console.log("EmailExistence Error: " + err);
+        console.log("error in saving to DB\n");
       } else {
-        var email = new Email({
-          email: rowData.email,
-          valid: response
-        });
-        email.save(err => {
-          if (err) {
-            console.log("error in saving to DB\n");
-          } else {
-            console.log(rowData.email + " saved successfully\n");
-          }
-        });
-        console.log("EmailExistence res: " + i++ + "/987815 " + response);
+        console.log(rowData.email + " saved successfully\n");
       }
     });
+
+    // setTimeout(function() {
+    //   emailExistence.check(rowData.email, function(err, response) {
+    //     if (err) {
+    //       console.log("EmailExistence Error: " + err);
+    //     } else {
+    //       var email = new Email({
+    //         email: rowData.email,
+    //         valid: response
+    //       });
+    //       email.save(err => {
+    //         if (err) {
+    //           console.log("error in saving to DB\n");
+    //         } else {
+    //           console.log(rowData.email + " saved successfully\n");
+    //         }
+    //       });
+    //       console.log(
+    //         "EmailExistence res: " +
+    //           i++ +
+    //           "/987815 " +
+    //           rowData.email +
+    //           " " +
+    //           response
+    //       );
+    //     }
+    //   });
+    // }, 100);
+    // emailExistence.check(rowData.email, function(err, response) {
+    //   if (err) {
+    //     console.log("EmailExistence Error: " + err);
+    //   } else {
+    //     var email = new Email({
+    //       email: rowData.email,
+    //       valid: response
+    //     });
+    //     email.save(err => {
+    //       if (err) {
+    //         console.log("error in saving to DB\n");
+    //       } else {
+    //         console.log(rowData.email + " saved successfully\n");
+    //       }
+    //     });
+    //     console.log("EmailExistence res: " + i++ + "/987815 " + response);
+    //   }
+    // });
   });
   res.json("Done");
 };
@@ -472,7 +510,7 @@ exports.getallemailData = function(req, res) {
 };
 
 exports.deleteSMS = function(req, res) {
-  SMS.find({}).remove(() => {
+  Email.find({}).remove(() => {
     res.json("Deleted SMS data all");
   });
 };
