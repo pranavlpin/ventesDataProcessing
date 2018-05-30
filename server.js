@@ -65,6 +65,8 @@ router.route("/aggrData").get(smsController.getAggrData); //gets unique keywords
 
 router.route("/deleteAllsms/").get(smsController.deleteSMS);
 router.route("/validmail/:mail").get(smsController.getValidMail);
+router.route("/validmailAll/").get(smsController.getValidMailAll);
+router.route("/allemailData").get(smsController.getallemailData); //All SMS data in raw format JSON
 
 //Register routes with API
 app.use("", router);

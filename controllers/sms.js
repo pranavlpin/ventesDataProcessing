@@ -2,12 +2,15 @@ const legit = require("legit"); //for checking email
 const MailConfirm = require("mail-confirm");
 const emailExistence = require("email-existence");
 var SMS = require("../models/SMS");
+var Email = require("../models/Email");
 var fs = require("fs");
 var _ = require("lodash");
 var lda = require("lda");
 var keyword_extractor = require("keyword-extractor");
 var mongoxlsx = require("mongo-xlsx");
 var ExcelReader = require("node-excel-stream").ExcelReader;
+var waterfall = require("async-waterfall");
+var async = require("async");
 
 // // Example document.
 // var text = 'Cats are small. Dogs are big. Cats like to chase mice. Dogs like to eat bones.';
@@ -66,7 +69,7 @@ exports.getKeywords = function(req, res) {
 };
 
 exports.getKeywordsBig = function(req, res) {
-  let dataStream = fs.createReadStream("smsFile.xlsx");
+  let dataStream = fs.createReadStream("./data/smsFile.xlsx");
   let reader = new ExcelReader(dataStream, {
     sheets: [
       {
@@ -87,40 +90,107 @@ exports.getKeywordsBig = function(req, res) {
             { name: "Circle", key: "circle" }
           ]
         }
+      },
+      {
+        name: "Sheet2",
+        rows: {
+          headerRow: 1,
+          allowedHeaders: [
+            {
+              name: "Mobile Number",
+              key: "phone"
+            },
+            {
+              name: "Message Text",
+              key: "text"
+            },
+            { name: "Bearer", key: "bearer" },
+            { name: "Operator", key: "operator" },
+            { name: "Circle", key: "circle" }
+          ]
+        }
+      },
+      {
+        name: "Sheet3",
+        rows: {
+          headerRow: 1,
+          allowedHeaders: [
+            {
+              name: "Mobile Number",
+              key: "phone"
+            },
+            {
+              name: "Message Text",
+              key: "text"
+            },
+            { name: "Bearer", key: "bearer" },
+            { name: "Operator", key: "operator" },
+            { name: "Circle", key: "circle" }
+          ]
+        }
+      },
+      {
+        name: "Sheet4",
+        rows: {
+          headerRow: 1,
+          allowedHeaders: [
+            {
+              name: "Mobile Number",
+              key: "phone"
+            },
+            {
+              name: "Message Text",
+              key: "text"
+            },
+            { name: "Bearer", key: "bearer" },
+            { name: "Operator", key: "operator" },
+            { name: "Circle", key: "circle" }
+          ]
+        }
       }
     ]
   });
   console.log("Starting Parse");
+  var i = 0;
   reader
     .eachRow((rowData, rowNum, sheetSchema) => {
-      console.log(`  >>${rowNum}/23366      ${rowData.phone}`);
+      console.log(`  >>${i++} ::  ${rowData.phone}`);
 
+      console.log("First Function Start!");
       var item = {};
       item["phone"] = rowData.phone;
       item["text"] = rowData.text;
       var sentence = rowData.text.match(/[^\.!\?]+[\.!\?]+/g);
-      item["lda"] = lda(sentence, 1, 5);
+      //item["lda"] = lda(sentence, 1, 5);
       item["bearer"] = rowData.bearer;
       item["operator"] = rowData.operator;
       item["circle"] = rowData.circle;
-      item["keywords"] = keyword_extractor.extract(rowData.text, {
-        language: "english",
-        remove_digits: true,
-        return_changed_case: true,
-        remove_duplicates: true
-      });
-      var regex = /xx[0-9]{4}/g; //Regular expression to remove credit card numbers
-      item["keywords"] = item["keywords"].filter(val => {
-        //console.log(item["phone"] + " " + rowData.phone);
-        return !val.match(regex);
-      });
+      // item["keywords"] = keyword_extractor.extract(rowData.text, {
+      //   language: "english",
+      //   remove_digits: true,
+      //   return_changed_case: true,
+      //   remove_duplicates: true
+      // });
+      // var regex = /xx[0-9]{4}/g; //Regular expression to remove credit card numbers
+      // item["keywords"] = item["keywords"].filter(val => {
+      //   //console.log(item["phone"] + " " + rowData.phone);
+      //   return !val.match(regex);
+      // });
 
       var sms = new SMS(item);
-      console.log(sms);
+      console.log("First function finish");
+      console.log("Second function start");
+      var saveMsg = "";
       sms.save(function(err) {
-        console.log("Trying to save");
+        if (err) {
+          saveMsg = "Error in Saving: " + err;
+          console.log("Error in Saving: ", err);
+        } else {
+          saveMsg = sms.phone + " saved!!";
+          console.log(">>Saved");
+        }
       });
-      console.log(JSON.stringify(item));
+      console.log("2nd function finish");
     })
     .then(() => {
       console.log("Parsing Done");
@@ -336,14 +406,69 @@ exports.getAggrData = function(req, res) {
 //     .catch(err => res.json(err));
 // };
 
+exports.getValidMailAll = function(req, res) {
+  let dataStream = fs.createReadStream("./data/emails/emails1.xlsx");
+  let reader = new ExcelReader(dataStream, {
+    sheets: [
+      {
+        name: "Sheet1",
+        rows: {
+          headerRow: 1,
+          allowedHeaders: [
+            {
+              name: "Email Id",
+              key: "email"
+            }
+          ]
+        }
+      }
+    ]
+  });
+  var i = 0,
+    j = 0;
+  reader.eachRow((rowData, rowNum, sheetSchema) => {
+    console.log("\n" + j++ + "/987815" + JSON.stringify(rowData) + "\n");
+
+    emailExistence.check(rowData.email, function(err, response) {
+      if (err) {
+        console.log("EmailExistence Error: " + err);
+      } else {
+        var email = new Email({
+          email: rowData.email,
+          valid: response
+        });
+        email.save(err => {
+          if (err) {
+            console.log("error in saving to DB\n");
+          } else {
+            console.log(rowData.email + " saved successfully\n");
+          }
+        });
+        console.log("EmailExistence res: " + i++ + "/987815 " + response);
+      }
+    });
+  });
+  res.json("Done");
+};
 exports.getValidMail = function(req, res) {
   emailExistence.check(req.params.mail, function(err, response) {
     if (err) {
-      res.send(err);
+      console.log(err);
     } else {
       res.json("res: " + response);
     }
   });
+};
+
+exports.getallemailData = function(req, res) {
+  Email.find({}, {}, function(err, sms) {
+    if (err) {
+      res.send(err);
+    } else {
+      res.json({ data: sms });
+    }
+  });
+  //res.send("Yo");
 };
 
 exports.deleteSMS = function(req, res) {
