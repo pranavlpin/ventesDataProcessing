@@ -1,12 +1,12 @@
 var express = require("express");
-var smsController = require("./controllers/sms");
+var emailController = require("./controllers/email");
 
 var router = express.Router();
 
 //Create endpoint handlers for /dashRewards
-router.route("/deleteAllemail/").get(smsController.deleteEmail);
-router.route("/validmail/").get(smsController.getValidMail);
-router.route("/validmailAll/").get(smsController.getValidMailAll);
-router.route("/allemailData").get(smsController.getallemailData); //All SMS data in raw format JSON
+router.route("/deleteAllemail/").get(emailController.deleteEmail);
+router.route("/validmail/").get(emailController.getValidMail);
+router.route("/validmailAll/").get(emailController.getValidMailAll);
+router.route("/allemailData").get(emailController.getallemailData); //All SMS data in raw format JSON
 
 module.exports = router;
