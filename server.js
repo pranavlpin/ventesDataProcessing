@@ -9,6 +9,8 @@ var SMS = require("./models/SMS");
 var smsController = require("./controllers/sms");
 var keyword_extractor = require("keyword-extractor");
 const hbs = require("hbs");
+var emailRoutes = require("./routes/emailRoutes");
+var smsRoutes = require("./routes/smsRoutes");
 
 const env = process.env.NODE_ENV || "development";
 
@@ -54,22 +56,11 @@ var port = process.env.PORT || 3000;
 var router = express.Router();
 
 //Routes
-router.route("/getkeywords").get(smsController.getKeywordsBig); //Uploads excel file and extracts keywords for each sms
-router.route("/allsmsData").get(smsController.getallsmsData); //All SMS data in raw format JSON
-router.route("/templateData").get(smsController.gettemplateData); //gets phone number data with keywords
-router.route("/smsData/:phoneNumber").get(smsController.getsmsData); //Template data of SMS as per given phone number
-router.route("/smsIDData/:sms_id").get(smsController.getsmsIDData); //Raw JSON data using ID of the SMS
-router.route("/keywordUser/:keyword").get(smsController.getKeywordUsers); //Phone numbers associated with particular keywords
-router.route("/manyKeywordUser/").get(smsController.getManyKeywordUsers); //Phone numbers associated with array of keywords
-router.route("/aggrData").get(smsController.getAggrData); //gets unique keywords
-
-router.route("/deleteAllsms/").get(smsController.deleteSMS);
-router.route("/validmail/:mail").get(smsController.getValidMail);
-router.route("/validmailAll/").get(smsController.getValidMailAll);
-router.route("/allemailData").get(smsController.getallemailData); //All SMS data in raw format JSON
 
 //Register routes with API
 app.use("", router);
+app.use("", smsRoutes);
+app.use("", emailRoutes);
 
 //Start the server
 app.listen(port, function() {
