@@ -8,6 +8,128 @@ var mongoxlsx = require("mongo-xlsx");
 var ExcelReader = require("node-excel-stream").ExcelReader;
 var waterfall = require("async-waterfall");
 var async = require("async");
+var stream = require("stream");
+var util = require("util");
+var Excel = require("exceljs");
+var LineByLineReader = require("line-by-line");
+//var lazy = require("lazy");
+
+exports.newFun = function(req, res) {
+  let i = 0;
+  // new lazy(fs.createReadStream("./data/emails/emails.txt")).lines.forEach(
+  //   function(line) {
+  //     //console.log(line.toString());
+  //     text = line.toString();
+  //     emailExistence.check(text, function(err, response) {
+  //       console.log(i++ + " " + text + " " + response + "\n");
+  //       //fs.appendFile("output.txt", `${response} \n/n`, function() {});
+  //     });
+  //   }
+  // );
+};
+
+// exports.streamTransformData = function(req, res) {
+//   lr = new LineByLineReader("./data/emails/emails.txt");
+//   var i = 0;
+//   lr.on("error", function(err) {
+//     console.log("Error: " + err);
+//   });
+
+//   lr.on("line", function(line) {
+//     let text = line.replace(/ /g, "");
+//     // Do some evaluation to determine if the text matches
+//     console.log(text.toString());
+//     emailExistence.check(text, function(err, response) {
+//       console.log("> " + response + "\n");
+//       fs.appendFile("output.txt", `${response} \n/n`, function() {});
+//     });
+//   });
+//   lr.on("end", function() {
+//     res.json("All lines read!");
+//   });
+// };
+
+exports.streamTransformData = function(req, res) {
+  let dataStream = fs.createReadStream("./data/emails/6.xlsx");
+  //var wstream = fs.createWriteStream("./data/emails/emailsDone.xlsx");
+  let reader = new ExcelReader(dataStream, {
+    sheets: [
+      {
+        name: "Sheet1",
+        rows: {
+          headerRow: 1,
+          allowedHeaders: [
+            {
+              name: "Email Id",
+              key: "email"
+            }
+          ]
+        }
+      }
+    ]
+  });
+  let promise = [];
+  var i = 0;
+  var j = 0;
+  reader.eachRow((rowData, rowNum, sheetSchema) => {
+    console.log("Read: " + i++ + " " + rowData.email);
+    dataStream.pause();
+    promise[rowNum] = new Promise((resolve, reject) => {
+      emailExistence.check(rowData.email, function(err, response) {
+        if (err) {
+          console.log("Error in checking: " + err);
+          return new Promise((resolve, reject) => {
+            var email = new Email({
+              email: rowData.email
+            });
+            email.save(err => {
+              if (err) {
+                //dataStream.resume();
+                reject("Error in saving: " + err);
+              } else {
+                console.log(rowData.email + " " + j++ + " saved success!!");
+                //dataStream.resume();
+                resolve(rowData + " saved successfully!");
+              }
+            });
+          });
+        } else {
+          console.log(rowData.email + " " + response + " response!!");
+          return new Promise((resolve, reject) => {
+            var email = new Email({
+              email: rowData.email,
+              isValid: response,
+              valid: response
+            });
+            email.save(err => {
+              if (err) {
+                //dataStream.resume();
+                reject("Error in saving: " + err);
+              } else {
+                console.log(rowData.email + " " + j++ + " saved success!!");
+                //dataStream.resume();
+                resolve(rowData + " saved successfully!");
+              }
+            });
+          });
+        }
+      });
+    })
+      .then(resp => {
+        console.log(resp);
+      })
+      .then(re => {
+        console.log(re);
+        Promise.all(promise)
+          .then(val => {
+            res.json("Resolved" + val);
+          })
+          .catch(e => {
+            console.log("ERROR in resolving All promise" + e);
+          });
+      });
+  });
+};
 
 exports.getValidMailAll = function(req, res) {
   let dataStream = fs.createReadStream("./data/emails/3.xlsx");
@@ -80,8 +202,8 @@ exports.getValidMailAll = function(req, res) {
   res.json(`saved ${i} emails out of ${j} read records from 100000`);
 };
 exports.getValidMail = function(req, res) {
-  Email.find({ valid: undefined })
-    .limit(5000)
+  Email.find({ valid: "Error" })
+    .limit(45000)
     .exec(function(err, result) {
       if (err) {
         console.log(err);
@@ -147,6 +269,6 @@ exports.getallemailData = function(req, res) {
 };
 exports.deleteEmail = function(req, res) {
   Email.find({}).remove(() => {
-    res.json("Deleted SMS data all");
+    res.json("Deleted Email data all");
   });
 };

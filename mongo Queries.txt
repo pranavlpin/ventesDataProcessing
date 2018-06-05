@@ -1,0 +1,30 @@
+db.emails.aggregate([  
+    {$group: {
+        _id: {Email: "$email"},
+        uniqueIds: {$addToSet: "$_id"}
+        }
+    }
+]);
+
+
+
+//Remove duplicate emails
+db.emails.aggregate([
+ {
+     "$group": {
+         _id: {Email: "$email"},
+         dups: { $addToSet: "$_id" } ,
+         count: { $sum : 1 }
+     }
+ },
+ {
+     "$match": {
+         count: { "$gt": 1 }
+     }
+ }
+], { allowDiskUse: true }).forEach(function(doc) {
+   doc.dups.shift();
+   db.emails.remove({
+       _id: {$in: doc.dups}
+   });
+})

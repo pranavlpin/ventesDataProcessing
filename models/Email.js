@@ -1,7 +1,7 @@
 var mongoose = require("mongoose");
 
 var EmailSchema = new mongoose.Schema({
-  email: String,
+  email: { type: String, unique: true },
   isValid: Boolean,
   valid: String
 });

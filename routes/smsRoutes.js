@@ -1,5 +1,5 @@
 var express = require("express");
-var smsController = require("./controllers/sms");
+var smsController = require("../controllers/sms");
 
 var router = express.Router();
 

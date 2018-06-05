@@ -9,18 +9,22 @@ var SMS = require("./models/SMS");
 var smsController = require("./controllers/sms");
 var keyword_extractor = require("keyword-extractor");
 const hbs = require("hbs");
+const cronValidateEmail = require("./cron/validateEmail");
 var emailRoutes = require("./routes/emailRoutes");
 var smsRoutes = require("./routes/smsRoutes");
 
 const env = process.env.NODE_ENV || "development";
 
-var connection = mongoose.connect("mongodb://127.0.0.1:27017/motomojo", err => {
-  if (err) {
-    console.log("Error: " + err);
-  } else {
-    console.log("connection success!!");
+var connection = mongoose.connect(
+  "mongodb://127.0.0.1:27017/motomojo",
+  err => {
+    if (err) {
+      console.log("Error: " + err);
+    } else {
+      console.log("connection success!!");
+    }
   }
-});
+);
 
 process.on("uncaughtException", function(error) {
   console.log(error.stack);
@@ -55,6 +59,7 @@ var port = process.env.PORT || 3000;
 
 var router = express.Router();
 
+cronValidateEmail.validateEmails.start();
 //Routes
 
 //Register routes with API
